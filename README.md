@@ -90,33 +90,6 @@ Settings › Appearance › Reveal: Off, Pop, or Pop and glow (default; the glow
 
 Settings › Appearance › Darken the screen: each theme's own (only Naked darkens), or the same color and amount for every theme. Covers the screen the launcher opens on, menu bar and Dock included.
 
-## Development
-
-Open `Lunchr.xcodeproj` in Xcode, not the folder. After changing `project.yml`, run `xcodegen generate`. Tests: `swift test`.
-
-To change the icon, edit `Icon/draw.swift` and redraw:
-
-```sh
-swiftc -O Icon/draw.swift -o .build/draw-icon && .build/draw-icon Icon/Lunchr.icon/Assets/print.png
-```
-
-Debug builds only, `LUNCHR_HOME` keeps your real settings out of it:
-
-```sh
-swift build
-LUNCHR_HOME=/tmp/lunchr LUNCHR_PREVIEW=te LUNCHR_SNAPSHOT=out.png .build/debug/Lunchr
-LUNCHR_HOME=/tmp/lunchr LUNCHR_SETTINGS=2 LUNCHR_SNAPSHOT=out.png .build/debug/Lunchr
-LUNCHR_HOME=/tmp/lunchr LUNCHR_OPEN=calculator .build/debug/Lunchr
-```
-
-Snapshots don't include the blur; the window server draws it. To see it, capture the reveal over a striped window:
-
-```sh
-LUNCHR_HOME=/tmp/lunchr LUNCHR_PREVIEW= LUNCHR_FRAMES=/tmp .build/debug/Lunchr
-```
-
-Screenshots and video: `Demo/media.sh` films a staged copy (blank settings, stock apps, a drawn desktop) and cuts `docs/media`. `Demo/media.sh picture.jpg` uses your own background; `--no-windows` leaves out the dark and light windows; `--out folder` saves elsewhere.
-
 ## License
 
 [PolyForm Noncommercial 1.0.0](LICENSE.md): use, copy and change it for any noncommercial purpose, and keep the copyright notice with every copy. No commercial use.
