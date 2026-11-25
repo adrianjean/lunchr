@@ -1,0 +1,30 @@
+{
+  "fill" : {
+    "linear-gradient" : [
+      "srgb:0.43000,0.30000,0.95000,1.00000",
+      "srgb:0.07000,0.07000,0.24000,1.00000"
+    ]
+  },
+  "groups" : [
+    {
+      "name" : "Rocket",
+      "layers" : [
+        { "image-name" : "fork.svg", "name" : "fork" },
+        { "image-name" : "flame.svg", "name" : "flame" }
+      ],
+      "shadow" : { "kind" : "neutral", "opacity" : 0.5 },
+      "translucency" : { "enabled" : false, "value" : 0.5 }
+    },
+    {
+      "name" : "Plate",
+      "layers" : [
+        { "image-name" : "plate.svg", "name" : "plate" }
+      ],
+      "shadow" : { "kind" : "neutral", "opacity" : 0.3 },
+      "translucency" : { "enabled" : true, "value" : 0.5 }
+    }
+  ],
+  "supported-platforms" : {
+    "squares" : [ "macOS" ]
+  }
+}

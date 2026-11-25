@@ -8,6 +8,10 @@
 	<string>Lunchr</string>
 	<key>CFBundleExecutable</key>
 	<string>Lunchr</string>
+	<key>CFBundleIconFile</key>
+	<string>Lunchr</string>
+	<key>CFBundleIconName</key>
+	<string>Lunchr</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>

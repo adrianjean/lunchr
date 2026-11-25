@@ -13,6 +13,16 @@ mkdir -p "$app/Contents/MacOS"
 cp "$bin" "$app/Contents/MacOS/Lunchr"
 cp Info.plist "$app/Contents/Info.plist"
 
+# Layered icon for macOS 26+, .icns for older. actool comes with Xcode, not the command line tools.
+mkdir -p "$app/Contents/Resources"
+if xcrun --find actool >/dev/null 2>&1; then
+  xcrun actool Icon/Lunchr.icon --compile "$app/Contents/Resources" --app-icon Lunchr \
+    --platform macosx --target-device mac --minimum-deployment-target 14.0 \
+    --output-partial-info-plist .build/icon.plist --errors --warnings >/dev/null
+else
+  echo "No Xcode: building without the app icon"
+fi
+
 identity="$(security find-identity -v -p codesigning | awk '/Apple Development|Developer ID/ {print $2; exit}')"
 codesign --force --options runtime --sign "${identity:--}" "$app"
 echo "Built $app"

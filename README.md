@@ -9,6 +9,8 @@ Opens apps. Nothing else. Swift, no dependencies, macOS 14+.
 swift test
 ```
 
+Needs Xcode for the icon; without it the app builds iconless. Edit the icon in `Icon/Lunchr.icon` (SVG layers, opens in Icon Composer).
+
 Use ⌘Space: turn off System Settings › Keyboard › Keyboard Shortcuts › Spotlight › Show Spotlight search, then Lunchr Settings › General › Use ⌘Space instead. Until then the shortcut is ⌥Space.
 
 ## Keys
