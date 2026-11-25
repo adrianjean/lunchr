@@ -22,6 +22,9 @@ final class LauncherController: NSObject, NSWindowDelegate {
     private let panel: LauncherPanel
     private let backdrop = BackdropView()
     private let glow = RevealGlowView(frame: .zero)
+    private let dimmer = ScreenDimmer()
+    /// The screen the launcher opened on.
+    private var screen: NSScreen?
     /// Everything visible, scaled as one during the reveal.
     private let stage = NSView()
     private var host: NSView?
@@ -108,12 +111,14 @@ final class LauncherController: NSObject, NSWindowDelegate {
                 focusField()
             }
         }
+        updateDim()
     }
 
     /// Instant, so the app being opened is never kept waiting.
     func hide() {
         setPreviewing(false)
         panel.orderOut(nil)
+        updateDim()
         endReveal()
         // Next time opens on the right list instead of swapping it during the reveal.
         model.reset()
@@ -195,12 +200,34 @@ final class LauncherController: NSObject, NSWindowDelegate {
         setPreviewing(true)
         layout()
         reveal { panel.orderFrontRegardless() }
+        updateDim()
     }
 
     private func setPreviewing(_ on: Bool) {
         previewing = on
         panel.ignoresMouseEvents = on
-        panel.level = on ? .floating : .modalPanel
+        // Darkening covers the menu bar, so the launcher has to be above that.
+        panel.level = on ? .floating : state.config.dim ? Self.aboveDim : .modalPanel
+    }
+
+    // MARK: Darken the screen
+
+    private static let dimLevel = NSWindow.Level(NSWindow.Level.statusBar.rawValue + 1)
+    private static let aboveDim = NSWindow.Level(NSWindow.Level.statusBar.rawValue + 2)
+
+    /// Open: covers everything else. In the preview: goes behind Settings, which has to stay readable.
+    private func updateDim() {
+        let target = previewing ? neighbour?.screen ?? screen : screen
+        guard state.config.dim, panel.isVisible, let frame = target?.frame else {
+            dimmer.show(nil, fade: state.config.reveal != .off)
+            return
+        }
+        dimmer.show(
+            ScreenDimmer.Look(
+                frame: frame, color: state.config.dimColor.nsColor.withAlphaComponent(1),
+                amount: state.config.dimAmount, level: previewing ? .normal : Self.dimLevel,
+                below: previewing ? neighbour?.windowNumber ?? 0 : 0),
+            fade: state.config.reveal != .off)
     }
 
     /// Where the launcher hangs beside Settings: right if it fits, else left, else as far right as it goes.
@@ -244,7 +271,7 @@ final class LauncherController: NSObject, NSWindowDelegate {
 
     private func place() {
         let mouse = NSEvent.mouseLocation
-        let screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
+        screen = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) } ?? NSScreen.main
         guard let area = screen?.visibleFrame else { return }
         anchor = NSPoint(x: area.midX, y: area.maxY - area.height * 0.22)
         layout()
@@ -259,6 +286,7 @@ final class LauncherController: NSObject, NSWindowDelegate {
         let frame = NSRect(
             x: (anchor.x - size.width / 2).rounded(), y: (anchor.y - size.height).rounded(),
             width: size.width, height: size.height)
+        updateDim()
         guard reshaped || panel.frame != frame else { return }
         panel.setFrame(frame, display: true)
         panel.invalidateShadow()

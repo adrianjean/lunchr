@@ -63,6 +63,8 @@ A file named after a built-in (`graphite.json`) replaces it.
 
 Settings › Appearance › Reveal: Off, Pop, or Pop and glow (default; the glow is the theme's `accent`, or white on light themes). With Reduce Motion on it only fades.
 
+Settings › Appearance › Darken the screen: covers the screen the launcher opens on, menu bar and Dock included, with a color at 0–100%. Off by default.
+
 ## Development
 
 Debug builds only, `LUNCHR_HOME` keeps your real settings out of it:

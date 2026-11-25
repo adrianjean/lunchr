@@ -32,6 +32,12 @@ public struct Config: Codable, Equatable, Sendable {
     public var opacity: Double?
     public var blur: BlurStyle?
     public var reveal = RevealStyle.glow
+    /// Cover the screen with a colour while the launcher is open.
+    public var dim = false
+    /// 0...1
+    public var dimAmount = 0.4
+    /// Alpha is ignored; `dimAmount` sets it.
+    public var dimColor = RGBA(hex: "#000000")!
     public var maxResults = 7
     public var showRecents = true
     public var hidden: [String] = []
@@ -48,6 +54,9 @@ public struct Config: Codable, Equatable, Sendable {
         opacity = try c.decodeIfPresent(Double.self, forKey: .opacity).map { min(max($0, 0), 1) }
         blur = try c.decodeIfPresent(BlurStyle.self, forKey: .blur)
         reveal = try c.decodeIfPresent(RevealStyle.self, forKey: .reveal) ?? d.reveal
+        dim = try c.decodeIfPresent(Bool.self, forKey: .dim) ?? d.dim
+        dimAmount = min(max(try c.decodeIfPresent(Double.self, forKey: .dimAmount) ?? d.dimAmount, 0), 1)
+        dimColor = try c.decodeIfPresent(RGBA.self, forKey: .dimColor) ?? d.dimColor
         maxResults = min(max(try c.decodeIfPresent(Int.self, forKey: .maxResults) ?? d.maxResults, 3), 12)
         showRecents = try c.decodeIfPresent(Bool.self, forKey: .showRecents) ?? d.showRecents
         hidden = try c.decodeIfPresent([String].self, forKey: .hidden) ?? d.hidden

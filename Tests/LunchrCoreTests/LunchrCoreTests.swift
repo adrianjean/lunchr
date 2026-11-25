@@ -223,8 +223,17 @@ final class FileTests: XCTestCase {
         config.hotKey = .commandSpace
         config.blur = .glass
         config.opacity = 0.4
+        config.dim = true
+        config.dimAmount = 0.55
+        config.dimColor = RGBA(hex: "#102030")!
         try JSONFile.save(config, to: url)
         XCTAssertEqual(JSONFile.load(Config.self, from: url), config)
+
+        // Settings from before darkening existed, and an amount that's out of range.
+        try write("{ \"maxResults\": 5 }", "config.json")
+        XCTAssertEqual(JSONFile.load(Config.self, from: url)?.dim, false)
+        try write("{ \"dim\": true, \"dimAmount\": 4 }", "config.json")
+        XCTAssertEqual(JSONFile.load(Config.self, from: url)?.dimAmount, 1)
 
         var m = LaunchMemory()
         m.recordLaunch("/A.app", query: Query("a"))

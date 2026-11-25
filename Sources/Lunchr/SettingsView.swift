@@ -116,6 +116,17 @@ private struct AppearanceTab: View {
                     Text("Pop and glow").tag(RevealStyle.glow)
                 }
             }
+            Section {
+                Toggle("Darken the screen", isOn: $state.config.dim)
+                if state.config.dim {
+                    SliderRow(
+                        title: "Amount",
+                        value: Binding(
+                            get: { state.config.dimAmount * 100 }, set: { state.config.dimAmount = $0 / 100 }),
+                        range: 0...100, unit: "%")
+                    ColorRow(title: "Color", color: $state.config.dimColor, allowsAlpha: false)
+                }
+            }
         }
         .formStyle(.grouped)
     }

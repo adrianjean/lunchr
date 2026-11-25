@@ -168,7 +168,7 @@ private struct ThemeForm: View {
     private static let families = NSFontManager.shared.availableFontFamilies.filter { !$0.hasPrefix(".") }
 }
 
-private struct SliderRow: View {
+struct SliderRow: View {
     let title: String
     @Binding var value: Double
     let range: ClosedRange<Double>
@@ -187,7 +187,7 @@ private struct SliderRow: View {
     }
 }
 
-private struct ColorRow: View {
+struct ColorRow: View {
     let title: String
     @Binding var color: RGBA
     var allowsAlpha = true
