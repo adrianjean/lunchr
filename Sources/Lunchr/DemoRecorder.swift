@@ -88,7 +88,8 @@ final class DemoRecorder {
     private func settingsShot(_ region: NSRect) async {
         use("graphite")
         guard let window = openSettings(2) else { return }
-        let wide = NSRect(x: region.midX - 720, y: region.midY - 400, width: 1440, height: 800)
+        // Wider to fit both windows, in the same 16:10.
+        let wide = NSRect(x: region.midX - 720, y: region.midY - 450, width: 1440, height: 900)
         window.setFrameOrigin(NSPoint(x: wide.minX + 50, y: wide.midY - window.frame.height / 2))
         showStage(wide)
         stage?.level = Self.level(-3)

@@ -53,8 +53,8 @@ gif() { ff -ss $1 -i $2 -vf "fps=30,scale=960:-1:flags=lanczos,split[a][b];[a]pa
 gif 0.3 $raw/naked.mov $out/naked.gif
 gif 0 $out/lunchr.mp4 $out/lunchr.gif
 
-for theme in graphite paper ember clear midnight meadow console; do
-  ff -i $raw/$theme.png -vf "crop=1640:1000:460:180,scale=1100:-1:flags=lanczos" $clean $out/$theme.png
+# Same framing as the video.
+for shot in graphite paper ember clear midnight meadow console naked settings; do
+  ff -i $raw/$shot.png -vf "scale=1920:-1:flags=lanczos" $clean $out/$shot.png
 done
-for shot in naked settings; do ff -i $raw/$shot.png -vf "scale=1600:-1:flags=lanczos" $clean $out/$shot.png; done
 ls -lh $out
