@@ -152,7 +152,7 @@ final class DemoRecorder {
     }
 }
 
-/// A made-up desktop: the icon's overprinted circles and two windows with nothing in them.
+/// A made-up desktop: the icon's overprinted circles and an empty dark and light window.
 /// LUNCHR_BACKGROUND=file: that picture instead of the circles. LUNCHR_WINDOWS=0: no windows.
 private final class DesktopView: NSView {
     private let env = ProcessInfo.processInfo.environment
@@ -211,21 +211,6 @@ private final class DesktopView: NSView {
             color(hex).setFill()
             NSBezierPath(ovalIn: NSRect(
                 x: frame.minX + 16 + Double(i) * 20, y: frame.minY + 15, width: 12, height: 12)).fill()
-        }
-        let inks = dark
-            ? ["#7CB7FF", "#E5A66B", "#8BD49C", "#C9CED8", "#D98BC0"] : ["#C9C5BC", "#D8D4CB", "#C9C5BC"]
-        for line in 0..<17 {
-            let y = frame.minY + 58 + Double(line) * 23
-            var x = frame.minX + 26 + (dark ? Double([0, 1, 2, 2, 1, 2, 3, 2, 1, 0][line % 10]) * 22 : 0)
-            for piece in 0..<(dark ? 3 : 1) {
-                let seed = (line * 7 + piece * 5) % 11
-                let width = dark ? 34 + Double(seed) * 10 : frame.width - 60 - Double(seed) * 14
-                guard x + width < frame.maxX - 20, line % 6 != 5 else { break }
-                color(inks[(line * 3 + piece) % inks.count]).withAlphaComponent(dark ? 0.85 : 1).setFill()
-                NSBezierPath(
-                    roundedRect: NSRect(x: x, y: y, width: width, height: 9), xRadius: 4.5, yRadius: 4.5).fill()
-                x += width + 12
-            }
         }
     }
 }

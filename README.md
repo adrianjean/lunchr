@@ -98,7 +98,7 @@ Snapshots don't include the blur; the window server draws it. To see it, capture
 LUNCHR_HOME=/tmp/lunchr LUNCHR_PREVIEW= LUNCHR_FRAMES=/tmp .build/debug/Lunchr
 ```
 
-Screenshots and video: `Demo/media.sh` films a staged copy (blank settings, stock apps, a drawn desktop) and cuts `docs/media`. `Demo/media.sh picture.jpg` uses your own background.
+Screenshots and video: `Demo/media.sh` films a staged copy (blank settings, stock apps, a drawn desktop) and cuts `docs/media`. `Demo/media.sh picture.jpg` uses your own background; `--no-windows` leaves out the dark and light windows; `--out folder` saves elsewhere.
 
 ## License
 
