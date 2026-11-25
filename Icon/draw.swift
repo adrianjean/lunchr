@@ -65,10 +65,6 @@ struct Plate {
     }
 }
 
-func circle(_ x: Double, _ y: Double, _ r: Double) -> Plate {
-    Plate { $0.fillEllipse(in: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)) }
-}
-
 func point(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x, y: y) }
 
 /// Three long tines, a soft bowl and a handle that runs off the bottom.
@@ -134,13 +130,37 @@ struct Ink {
 }
 
 let radius = 478.0
+func disc(_ x: Double, _ y: Double) -> CGRect {
+    CGRect(x: x - radius, y: y - radius, width: radius * 2, height: radius * 2)
+}
+let circles = [disc(0, 512), disc(512, 0), disc(1024, 512), disc(512, 1024)]
+
+/// Where neighbouring circles cross.
+func fillLeaves(_ c: CGContext) {
+    for i in 0..<4 {
+        c.saveGState()
+        c.addEllipse(in: circles[i])
+        c.clip()
+        c.fillEllipse(in: circles[(i + 1) % 4])
+        c.restoreGState()
+    }
+}
+
+/// The circles without the leaves.
+let ground = Plate { c in
+    for circle in circles { c.fillEllipse(in: circle) }
+    c.setFillColor(gray: 0, alpha: 1)
+    fillLeaves(c)
+}
+
+// On the cream paper these print as #7B8B70 and #2A2B30.
+let sage = (0.485, 0.58, 0.575), charcoal = (0.14, 0.155, 0.22)
 let inks: [Ink] = [
-    Ink(plate: circle(0, 512, radius), color: (0.95, 0.69, 0.15), shift: (3, -2), seed: 10),
-    Ink(plate: circle(512, 1024, radius), color: (0.70, 0.73, 0.30), shift: (-3, 3), seed: 20),
-    Ink(plate: circle(1024, 512, radius), color: (0.93, 0.38, 0.29), shift: (-2, -4), seed: 30),
-    Ink(plate: circle(512, 0, radius), color: (0.34, 0.70, 0.72), shift: (4, 2), seed: 40),
-    Ink(plate: forkPlate, color: (0.15, 0.17, 0.22), strength: 0.93, shift: (20, 16), seed: 50),
-    Ink(plate: forkRight, color: (0.96, 0.74, 0.36), strength: 0.8, shift: (4, 2), leavesFork: false, seed: 60),]
+    Ink(plate: ground, color: sage, shift: (3, -2), seed: 10),
+    Ink(plate: Plate(fillLeaves), color: charcoal, shift: (-2, 3), seed: 20),
+    Ink(plate: forkPlate, color: charcoal, strength: 0.93, shift: (20, 16), seed: 50),
+    Ink(plate: forkRight, color: sage, strength: 0.42, shift: (4, 2), leavesFork: false, seed: 60),
+]
 
 // MARK: Printing
 
@@ -156,7 +176,7 @@ pixels.withUnsafeMutableBufferPointer { out in
             let weave = cloud(x, y * 0.35, 14, 5) - 0.5
             let fibre = noise(x / 34, y / 3.2, 7) > 0.955 ? -0.05 : 0
             let light = 1 + tooth * 0.07 + mottle * 0.07 + weave * 0.07 + fibre
-            var rgb = [0.955 * light, 0.905 * light, 0.80 * light]
+            var rgb = [0.957 * light, 0.914 * light, 0.74 * light]
 
             // Ragged ink edges.
             let ex = x + (cloud(x, y, 9, 90) - 0.5) * 3.2
