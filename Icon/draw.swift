@@ -71,7 +71,7 @@ func circle(_ x: Double, _ y: Double, _ r: Double) -> Plate {
 
 func point(_ x: Double, _ y: Double) -> CGPoint { CGPoint(x: x, y: y) }
 
-/// Three long tines, a soft bowl and a teardrop handle.
+/// Three long tines, a soft bowl and a handle that runs off the bottom.
 let fork: CGPath = {
     let p = CGMutablePath()
     let tine = 60.0, gap = 44.0, top = 96.0, slot = 400.0
@@ -98,8 +98,10 @@ let fork: CGPath = {
     p.addLine(to: point(right, 430))
     p.addCurve(to: point(531, 640), control1: point(right, 545), control2: point(531, 530))
     p.addCurve(to: point(574, 852), control1: point(531, 720), control2: point(574, 770))
-    p.addCurve(to: point(512, 926), control1: point(574, 898), control2: point(546, 926))
-    p.addCurve(to: point(450, 852), control1: point(478, 926), control2: point(450, 898))
+    // Off the bottom edge.
+    p.addCurve(to: point(582, 1120), control1: point(574, 930), control2: point(580, 1030))
+    p.addLine(to: point(442, 1120))
+    p.addCurve(to: point(450, 852), control1: point(444, 1030), control2: point(450, 930))
     p.addCurve(to: point(493, 640), control1: point(450, 770), control2: point(493, 720))
     p.addCurve(to: point(left, 430), control1: point(493, 530), control2: point(left, 545))
     p.closeSubpath()
