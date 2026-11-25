@@ -1,6 +1,9 @@
 # Lunchr
 
-Opens apps. Nothing else. Swift, no dependencies, macOS 14+.
+Opens apps. Nothing else. Ok, with themes, but nothing else.
+(Also, no telemetry... literally just opens apps)
+
+Enjoy!
 
 ![Lunchr opening, searching and closing in five themes](docs/media/lunchr.gif)
 
