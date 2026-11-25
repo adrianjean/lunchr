@@ -10,22 +10,27 @@ Enjoy!
 
 [Full quality video](docs/media/lunchr.mp4)
 
+## Requirements
+
+- macOS 14 or later
+- Xcode 26 or later, opened once to finish its setup
+
 ## Install
 
-```sh
-./build.sh install    # build, copy to /Applications, start
-swift test
-```
+1. Build it, copy it to /Applications and start it:
 
-In Xcode, open `Lunchr.xcodeproj`, not the folder or `Package.swift`: those build a bare program with no icon. The project comes from `project.yml` (`xcodegen generate`).
+   ```sh
+   git clone https://github.com/adrianjean/lunchr.git
+   cd lunchr
+   ./build.sh install
+   ```
 
-Needs Xcode for the icon; without it the app builds iconless. To change the icon, edit `Icon/draw.swift` (inks, shapes, paper) and redraw:
+2. Press ⌥Space.
 
-```sh
-swiftc -O Icon/draw.swift -o .build/draw-icon && .build/draw-icon Icon/Lunchr.icon/Assets/print.png
-```
+To use ⌘Space instead:
 
-Use ⌘Space: turn off System Settings › Keyboard › Keyboard Shortcuts › Spotlight › Show Spotlight search, then Lunchr Settings › General › Use ⌘Space instead. Until then the shortcut is ⌥Space.
+1. Turn off System Settings › Keyboard › Keyboard Shortcuts › Spotlight › Show Spotlight search.
+2. Click Lunchr Settings › General › Use ⌘Space instead.
 
 ## Keys
 
@@ -86,6 +91,14 @@ Settings › Appearance › Reveal: Off, Pop, or Pop and glow (default; the glow
 Settings › Appearance › Darken the screen: each theme's own (only Naked darkens), or the same color and amount for every theme. Covers the screen the launcher opens on, menu bar and Dock included.
 
 ## Development
+
+Open `Lunchr.xcodeproj` in Xcode, not the folder. After changing `project.yml`, run `xcodegen generate`. Tests: `swift test`.
+
+To change the icon, edit `Icon/draw.swift` and redraw:
+
+```sh
+swiftc -O Icon/draw.swift -o .build/draw-icon && .build/draw-icon Icon/Lunchr.icon/Assets/print.png
+```
 
 Debug builds only, `LUNCHR_HOME` keeps your real settings out of it:
 
