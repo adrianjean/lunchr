@@ -166,7 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     private func makeStatusItem() {
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        statusItem.button?.image = NSImage(systemSymbolName: "fork.knife", accessibilityDescription: "Lunchr")
+        statusItem.button?.image = MenuBarIcon.make()
         let menu = NSMenu()
         menu.addItem(item("Open Lunchr", #selector(showLauncher)))
         menu.addItem(item("Settings…", #selector(openSettings), ","))
