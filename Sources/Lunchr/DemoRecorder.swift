@@ -153,14 +153,37 @@ final class DemoRecorder {
 }
 
 /// A made-up desktop: the icon's overprinted circles and two windows with nothing in them.
+/// LUNCHR_BACKGROUND=file: that picture instead of the circles. LUNCHR_WINDOWS=0: no windows.
 private final class DesktopView: NSView {
+    private let env = ProcessInfo.processInfo.environment
+    private lazy var picture = env["LUNCHR_BACKGROUND"].flatMap { NSImage(contentsOfFile: $0) }
+
     override var isFlipped: Bool { true }
+    override var isOpaque: Bool { true }
 
     private func color(_ hex: String) -> NSColor { RGBA(hex: hex)!.nsColor }
 
     override func draw(_ dirtyRect: NSRect) {
         guard let context = NSGraphicsContext.current?.cgContext else { return }
         let w = bounds.width, h = bounds.height
+        if let picture {
+            let scale = max(w / picture.size.width, h / picture.size.height)
+            let size = NSSize(width: picture.size.width * scale, height: picture.size.height * scale)
+            NSColor.black.setFill()
+            bounds.fill()
+            NSGraphicsContext.current?.imageInterpolation = .high
+            picture.draw(
+                in: NSRect(x: (w - size.width) / 2, y: (h - size.height) / 2, width: size.width, height: size.height),
+                from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+        } else {
+            drawCircles(context, w, h)
+        }
+        guard env["LUNCHR_WINDOWS"] != "0" else { return }
+        window(NSRect(x: w * 0.06, y: h * 0.11, width: 600, height: 470), dark: true, context)
+        window(NSRect(x: w * 0.94 - 560, y: h * 0.34, width: 560, height: 460), dark: false, context)
+    }
+
+    private func drawCircles(_ context: CGContext, _ w: CGFloat, _ h: CGFloat) {
         color("#F3E7CC").setFill()
         bounds.fill()
         context.saveGState()
@@ -174,9 +197,6 @@ private final class DesktopView: NSView {
             context.fillEllipse(in: CGRect(x: w * x - radius, y: h * y - radius, width: radius * 2, height: radius * 2))
         }
         context.restoreGState()
-
-        window(NSRect(x: w * 0.06, y: h * 0.11, width: 600, height: 470), dark: true, context)
-        window(NSRect(x: w * 0.94 - 560, y: h * 0.34, width: 560, height: 460), dark: false, context)
     }
 
     private func window(_ frame: NSRect, dark: Bool, _ context: CGContext) {

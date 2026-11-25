@@ -1,11 +1,19 @@
 #!/bin/zsh
-# Demo/media.sh        film the staged demo and cut docs/media (takes the screen and keyboard for 45 s; Esc stops)
-# Demo/media.sh cut    cut again from the last take
-# Needs ffmpeg. Blank settings, stock macOS apps and a drawn desktop: nothing of yours is in it.
+# Demo/media.sh                  film the staged demo and cut docs/media (takes the screen and keyboard for 45 s; Esc stops)
+# Demo/media.sh picture.jpg      the same, over your own background (fills 16:10, cropped to fit)
+# Demo/media.sh cut              cut again from the last take
+# LUNCHR_WINDOWS=0 in front      leave out the two dummy windows
+# OUT=folder in front            save there instead of docs/media
+# Needs ffmpeg. Blank settings and stock macOS apps: nothing of yours is in it but the picture you pass.
 set -euo pipefail
+out="${OUT:-docs/media}"
+[[ -n "${OUT:-}" ]] && out="${OUT:a}"
+if [[ -n "${1:-}" && "$1" != cut ]]; then
+  export LUNCHR_BACKGROUND="${1:a}"
+  sips -g pixelWidth "$LUNCHR_BACKGROUND" 2>/dev/null | grep -q 'pixelWidth: [0-9]' || { echo "Not a picture: $1"; exit 1 }
+fi
 cd "${0:a:h}/.."
 raw=.build/demo
-out=docs/media
 mkdir -p $out
 
 if [[ "${1:-}" != cut ]]; then
