@@ -117,7 +117,10 @@ private struct AppearanceTab: View {
                 }
             }
             Section {
-                Toggle("Darken the screen", isOn: $state.config.dim)
+                Picker("Darken the screen", selection: $state.config.dim) {
+                    Text("Theme's own").tag(false)
+                    Text("Same for every theme").tag(true)
+                }
                 if state.config.dim {
                     SliderRow(
                         title: "Amount",

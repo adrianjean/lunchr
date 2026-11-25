@@ -207,7 +207,7 @@ final class LauncherController: NSObject, NSWindowDelegate {
         previewing = on
         panel.ignoresMouseEvents = on
         // Darkening covers the menu bar, so the launcher has to be above that.
-        panel.level = on ? .floating : state.config.dim ? Self.aboveDim : .modalPanel
+        panel.level = on ? .floating : state.dim.amount > 0 ? Self.aboveDim : .modalPanel
     }
 
     // MARK: Darken the screen
@@ -218,14 +218,15 @@ final class LauncherController: NSObject, NSWindowDelegate {
     /// Open: covers everything else. In the preview: goes behind Settings, which has to stay readable.
     private func updateDim() {
         let target = previewing ? neighbour?.screen ?? screen : screen
-        guard state.config.dim, panel.isVisible, let frame = target?.frame else {
+        let dim = state.dim
+        guard dim.amount > 0, panel.isVisible, let frame = target?.frame else {
             dimmer.show(nil, fade: state.config.reveal != .off)
             return
         }
         dimmer.show(
             ScreenDimmer.Look(
-                frame: frame, color: state.config.dimColor.nsColor.withAlphaComponent(1),
-                amount: state.config.dimAmount, level: previewing ? .normal : Self.dimLevel,
+                frame: frame, color: dim.color.nsColor.withAlphaComponent(1),
+                amount: dim.amount, level: previewing ? .normal : Self.dimLevel,
                 below: previewing ? neighbour?.windowNumber ?? 0 : 0),
             fade: state.config.reveal != .off)
     }
@@ -282,6 +283,8 @@ final class LauncherController: NSObject, NSWindowDelegate {
         if previewing, let beside = previewAnchor() { anchor = beside }
         let reshaped = backdrop.apply(theme)
         panel.appearance = NSAppearance(named: theme.dark ? .darkAqua : .aqua)
+        // Without a panel the shadow would follow the letters.
+        panel.hasShadow = theme.blur != .none || theme.opacity >= 0.1
         let size = NSSize(width: theme.width, height: theme.height(rows: model.results.count))
         let frame = NSRect(
             x: (anchor.x - size.width / 2).rounded(), y: (anchor.y - size.height).rounded(),

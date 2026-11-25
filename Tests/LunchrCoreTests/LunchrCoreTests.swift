@@ -171,6 +171,7 @@ final class FileTests: XCTestCase {
         let mine = try XCTUnwrap(r.themes.first { $0.id == "mine" })
         XCTAssertEqual(mine.background.hex, "#102030")
         XCTAssertEqual(mine.opacity, 1)
+        XCTAssertEqual(mine.dim, 0)
         XCTAssertEqual(mine.querySize, Theme().querySize)
         XCTAssertEqual(r.themes.first { $0.id == "paper" }?.name, "My Paper")
         XCTAssertEqual(r.problems.count, 1)

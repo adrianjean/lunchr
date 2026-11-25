@@ -32,7 +32,7 @@ public struct Config: Codable, Equatable, Sendable {
     public var opacity: Double?
     public var blur: BlurStyle?
     public var reveal = RevealStyle.glow
-    /// Cover the screen with a colour while the launcher is open.
+    /// Darken the screen the same way for every theme, instead of each theme's own way.
     public var dim = false
     /// 0...1
     public var dimAmount = 0.4

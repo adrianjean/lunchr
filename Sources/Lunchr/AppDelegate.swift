@@ -28,6 +28,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     /// and quit. Behind-window blur is drawn by the window server, so it isn't in the picture.
     private func debugSnapshot() {
         let env = ProcessInfo.processInfo.environment
+        if let folder = env["LUNCHR_DEMO"] {
+            let demo = DemoRecorder(state: state, launcher: launcher, folder: folder) { [weak self] tab in
+                self?.showSettings(tab: tab)
+                return self?.settings
+            }
+            Task { @MainActor in await demo.run() }
+            return
+        }
         // LUNCHR_FRAMES=folder: reveal over a striped window and save what the screen shows.
         if let folder = env["LUNCHR_FRAMES"] {
             debugFrames(folder, query: env["LUNCHR_PREVIEW"] ?? "te")

@@ -61,7 +61,15 @@ final class AppState: ObservableObject {
 
     // MARK: Apps
 
-    private var roots: [String] { AppScanner.defaultRoots + config.extraFolders }
+    private var roots: [String] {
+        #if DEBUG
+        // LUNCHR_ROOTS=/a:/b: only these folders.
+        if let only = ProcessInfo.processInfo.environment["LUNCHR_ROOTS"] {
+            return only.split(separator: ":").map(String.init)
+        }
+        #endif
+        return AppScanner.defaultRoots + config.extraFolders
+    }
 
     func rescan() {
         let roots = self.roots
@@ -164,6 +172,12 @@ final class AppState: ObservableObject {
         if let opacity = config.opacity { theme.opacity = opacity }
         if let blur = config.blur { theme.blur = blur }
         return theme
+    }
+
+    /// How much to darken the screen, 0...1, and with what.
+    var dim: (amount: Double, color: RGBA) {
+        if config.dim, editingThemeID == nil { return (config.dimAmount, config.dimColor) }
+        return (theme.dim, theme.dimColor)
     }
 
     private func reloadThemes() {

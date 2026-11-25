@@ -106,12 +106,13 @@ private struct ThemeForm: View {
             ForEach(state.themeProblems, id: \.self) {
                 Label($0, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
             }
-            if state.config.opacity != nil || state.config.blur != nil {
+            if state.config.opacity != nil || state.config.blur != nil || state.config.dim {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Appearance is set to override every theme's transparency or blur. The preview shows this theme's own.")
+                    Text("Appearance is set to override every theme's transparency, blur or darkening. The preview shows this theme's own.")
                     Button("Use Each Theme's Own") {
                         state.config.opacity = nil
                         state.config.blur = nil
+                        state.config.dim = false
                     }
                 }
             }
@@ -131,6 +132,13 @@ private struct ThemeForm: View {
                 Picker("Blur", selection: $theme.blur) {
                     ForEach(BlurStyle.allCases, id: \.self) { Text($0.label).tag($0) }
                 }
+            }
+            Section("Darken the screen") {
+                SliderRow(
+                    title: "Amount",
+                    value: Binding(get: { theme.dim * 100 }, set: { theme.dim = $0 / 100 }),
+                    range: 0...100, unit: "%")
+                ColorRow(title: "Color", color: $theme.dimColor, allowsAlpha: false)
             }
             Section("Colors") {
                 ColorRow(title: "Text", color: $theme.text)

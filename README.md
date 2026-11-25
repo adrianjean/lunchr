@@ -2,6 +2,10 @@
 
 Opens apps. Nothing else. Swift, no dependencies, macOS 14+.
 
+![Lunchr opening, searching and closing in five themes](docs/media/lunchr.gif)
+
+[Full quality video](docs/media/lunchr.mp4)
+
 ## Install
 
 ```sh
@@ -44,7 +48,18 @@ Loose matches only show when nothing better does.
 
 ## Themes
 
-Settings › Themes: edit colors, transparency, blur, font and sizes with the launcher beside it. Saved as you go. Restore Original brings a built-in back; Duplicate makes your own.
+![The Naked theme: the screen darkens and a glow traces the search](docs/media/naked.gif)
+
+| | |
+|---|---|
+| ![Graphite](docs/media/graphite.png) Graphite | ![Paper](docs/media/paper.png) Paper |
+| ![Clear Glass](docs/media/clear.png) Clear Glass | ![Midnight](docs/media/midnight.png) Midnight |
+| ![Ember](docs/media/ember.png) Ember | ![Meadow](docs/media/meadow.png) Meadow |
+| ![Console](docs/media/console.png) Console | ![Naked](docs/media/naked.png) Naked: no panel, only a darkened screen |
+
+![Theme editor with the launcher beside it](docs/media/settings.png)
+
+Settings › Themes: edit colors, transparency, blur, darkening, font and sizes with the launcher beside it. Saved as you go. Restore Original brings a built-in back; Duplicate makes your own.
 
 Or put a `.json` in `~/Library/Application Support/Lunchr/Themes`. Changes show on save. Every field is optional:
 
@@ -54,6 +69,7 @@ Or put a `.json` in `~/Library/Application Support/Lunchr/Themes`. Changes show 
 | `background`, `text`, `secondaryText`, `accent`, `selection`, `selectedText`, `border` | `#RRGGBB` or `#RRGGBBAA` |
 | `opacity` | 0 (only blur) to 1 (solid) |
 | `blur` | `none` `soft` `frosted` `heavy` `glass` (glass needs macOS 26) |
+| `dim`, `dimColor` | how much the screen darkens, 0 to 1, and `#RRGGBB` |
 | `font` | `system` `rounded` `mono` `serif` or a font family |
 | `cornerRadius`, `querySize`, `rowSize`, `iconSize`, `width` | points |
 
@@ -63,7 +79,7 @@ A file named after a built-in (`graphite.json`) replaces it.
 
 Settings › Appearance › Reveal: Off, Pop, or Pop and glow (default; the glow is the theme's `accent`, or white on light themes). With Reduce Motion on it only fades.
 
-Settings › Appearance › Darken the screen: covers the screen the launcher opens on, menu bar and Dock included, with a color at 0–100%. Off by default.
+Settings › Appearance › Darken the screen: each theme's own (only Naked darkens), or the same color and amount for every theme. Covers the screen the launcher opens on, menu bar and Dock included.
 
 ## Development
 
@@ -81,6 +97,8 @@ Snapshots don't include the blur; the window server draws it. To see it, capture
 ```sh
 LUNCHR_HOME=/tmp/lunchr LUNCHR_PREVIEW= LUNCHR_FRAMES=/tmp .build/debug/Lunchr
 ```
+
+Screenshots and video: `Demo/media.sh` films a staged copy (blank settings, stock apps, a drawn desktop) and cuts `docs/media`.
 
 ## License
 

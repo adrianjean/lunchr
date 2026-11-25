@@ -71,6 +71,10 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
     /// 0 = only the blur shows, 1 = solid.
     public var opacity = 0.6
     public var blur = BlurStyle.frosted
+    /// How much the screen darkens while the launcher is open: 0 = not at all, 1 = only `dimColor`.
+    public var dim = 0.0
+    /// Alpha is ignored; `dim` sets it.
+    public var dimColor = RGBA(hex: "#000000")!
     public var text = RGBA(hex: "#F4F4F6")!
     public var secondaryText = RGBA(hex: "#F4F4F699")!
     public var accent = RGBA(hex: "#6EA8FE")!
@@ -86,7 +90,7 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
     public var width = 620.0
 
     enum CodingKeys: String, CodingKey {
-        case name, dark, background, opacity, blur, text, secondaryText, accent, selection
+        case name, dark, background, opacity, blur, dim, dimColor, text, secondaryText, accent, selection
         case selectedText, border, cornerRadius, font, querySize, rowSize, iconSize, width
     }
 
@@ -114,6 +118,8 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         try read(.background, &background)
         try read(.opacity, &opacity, in: 0...1)
         try read(.blur, &blur)
+        try read(.dim, &dim, in: 0...1)
+        try read(.dimColor, &dimColor)
         try read(.text, &text)
         try read(.secondaryText, &secondaryText)
         try read(.accent, &accent)
@@ -234,6 +240,23 @@ extension Theme {
             $0.querySize = 20
             $0.rowSize = 14
             $0.iconSize = 24
+        },
+        // No panel: just the text on a darkened screen.
+        make("naked", "Naked") {
+            $0.background = c("#000000")
+            $0.opacity = 0
+            $0.blur = .none
+            $0.dim = 0.82
+            $0.text = c("#FFFFFF")
+            $0.secondaryText = c("#FFFFFFA6")
+            $0.accent = c("#8FC7FF")
+            $0.selection = c("#FFFFFF1F")
+            $0.border = c("#FFFFFF00")
+            $0.cornerRadius = 22
+            $0.querySize = 34
+            $0.rowSize = 17
+            $0.iconSize = 34
+            $0.width = 660
         },
     ]
 }
