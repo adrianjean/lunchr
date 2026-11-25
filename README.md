@@ -9,6 +9,8 @@ Opens apps. Nothing else. Swift, no dependencies, macOS 14+.
 swift test
 ```
 
+In Xcode, open `Lunchr.xcodeproj`, not the folder or `Package.swift`: those build a bare program with no icon. The project comes from `project.yml` (`xcodegen generate`).
+
 Needs Xcode for the icon; without it the app builds iconless. To change the icon, edit `Icon/draw.swift` (inks, shapes, paper) and redraw:
 
 ```sh

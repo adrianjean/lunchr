@@ -1,0 +1,46 @@
+# Lunchr.xcodeproj is generated from this: run `xcodegen generate` after changing it.
+# Opening Package.swift in Xcode builds a bare program with no icon; open the project instead.
+name: Lunchr
+options:
+  bundleIdPrefix: ca.axonz
+  deploymentTarget:
+    macOS: "14.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    CODE_SIGN_STYLE: Manual
+    CODE_SIGN_IDENTITY: "-"
+targets:
+  LunchrCore:
+    type: library.static
+    platform: macOS
+    sources:
+      - path: Sources/LunchrCore
+        type: syncedFolder
+  Lunchr:
+    type: application
+    platform: macOS
+    sources:
+      - path: Sources/Lunchr
+        type: syncedFolder
+      - path: Icon/Lunchr.icon
+        type: file
+        buildPhase: resources
+    dependencies:
+      - target: LunchrCore
+    settings:
+      base:
+        INFOPLIST_FILE: Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        PRODUCT_BUNDLE_IDENTIFIER: ca.axonz.lunchr
+        ASSETCATALOG_COMPILER_APPICON_NAME: Lunchr
+        ENABLE_HARDENED_RUNTIME: YES
+schemes:
+  Lunchr:
+    build:
+      targets:
+        Lunchr: all
+    run:
+      config: Debug
+    archive:
+      config: Release
