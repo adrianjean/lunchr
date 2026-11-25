@@ -1,6 +1,7 @@
 # Lunchr
 
 Opens apps. Nothing else. Ok, with themes, but nothing else.
+
 (Also, no telemetry... literally just opens apps)
 
 Enjoy!
