@@ -21,7 +21,7 @@ public enum AppScanner {
         var seen: Set<String> = []
         return found
             .filter { seen.insert(URL(fileURLWithPath: $0).resolvingSymlinksInPath().path).inserted }
-            .compactMap(entry)
+            .compactMap { path in autoreleasepool { entry(path) } }
             .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
@@ -53,6 +53,16 @@ public enum AppScanner {
             info["CFBundleDisplayName"] as? String ?? "",
             info["CFBundleName"] as? String ?? "",
         ])
+    }
+
+    /// Differs when the app was replaced, updated or given another icon.
+    public static func stamp(_ path: String) -> [Int] {
+        ["", "/Contents", "/Contents/Info.plist", "/Contents/Resources"].flatMap { part -> [Int] in
+            var info = stat()
+            // Change time, not modification time: copying an app in can keep old modification times.
+            guard stat(path + part, &info) == 0 else { return [0] }
+            return [Int(info.st_ino), info.st_ctimespec.tv_sec, info.st_ctimespec.tv_nsec]
+        }
     }
 
     private static func stripSuffix(_ name: String) -> String {

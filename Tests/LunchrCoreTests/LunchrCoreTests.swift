@@ -267,6 +267,45 @@ final class FileTests: XCTestCase {
         XCTAssertEqual(found[1].names.map(\.text), ["One", "Uno"])
     }
 
+    func testStampChangesOnlyWithTheApp() throws {
+        let files = FileManager.default
+        func make(_ name: String) throws -> URL {
+            let app = dir.appendingPathComponent(name)
+            try files.createDirectory(
+                at: app.appendingPathComponent("Contents/Resources"), withIntermediateDirectories: true)
+            try ([:] as NSDictionary).write(to: app.appendingPathComponent("Contents/Info.plist"))
+            return app
+        }
+        let app = try make("App.app"), other = try make("Other.app")
+        let first = AppScanner.stamp(app.path)
+        XCTAssertEqual(first, AppScanner.stamp(app.path))
+
+        // New icon file.
+        try Data().write(to: other.appendingPathComponent("Contents/Resources/New.icns"))
+        XCTAssertEqual(first, AppScanner.stamp(app.path))
+        try Data().write(to: app.appendingPathComponent("Contents/Resources/New.icns"))
+        let second = AppScanner.stamp(app.path)
+        XCTAssertNotEqual(first, second)
+
+        // Updated in place, with the old modification time kept.
+        let plist = app.appendingPathComponent("Contents/Info.plist")
+        let date = try files.attributesOfItem(atPath: plist.path)[.modificationDate]!
+        try (["CFBundleVersion": "2"] as NSDictionary).write(to: plist)
+        try files.setAttributes([.modificationDate: date], ofItemAtPath: plist.path)
+        let third = AppScanner.stamp(app.path)
+        XCTAssertNotEqual(second, third)
+
+        // Replaced, seen through a symlink.
+        let link = dir.appendingPathComponent("Link.app")
+        try files.createSymbolicLink(at: link, withDestinationURL: app)
+        XCTAssertEqual(third, AppScanner.stamp(link.path))
+        try files.removeItem(at: app)
+        try files.moveItem(at: other, to: app)
+        XCTAssertNotEqual(third, AppScanner.stamp(link.path))
+
+        XCTAssertEqual(AppScanner.stamp(dir.appendingPathComponent("Gone.app").path), [0, 0, 0, 0])
+    }
+
     func testRealMachineScan() {
         let names = Set(AppScanner.scan().map(\.name))
         for expected in ["Safari", "Finder", "Terminal", "System Settings"] {

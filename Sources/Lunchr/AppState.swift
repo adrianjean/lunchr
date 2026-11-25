@@ -20,7 +20,7 @@ final class AppState: ObservableObject {
     private var configURL: URL { home.appendingPathComponent("config.json") }
     private var memoryURL: URL { home.appendingPathComponent("memory.json") }
 
-    private var icons: [String: NSImage] = [:]
+    private var icons: [String: (image: NSImage, stamp: [Int])] = [:]
     private var appWatcher: FolderWatcher?
     private var themeWatcher: FolderWatcher?
     private var pendingScan: DispatchWorkItem?
@@ -98,20 +98,16 @@ final class AppState: ObservableObject {
 
     private func scheduleScan() {
         pendingScan?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            MainActor.assumeIsolated {
-                self?.icons = [:]
-                self?.rescan()
-            }
-        }
+        let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.rescan() } }
         pendingScan = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5, execute: work)
     }
 
     func icon(_ path: String) -> NSImage {
-        if let cached = icons[path] { return cached }
+        if let cached = icons[path] { return cached.image }
+        let stamp = AppScanner.stamp(path)
         let icon = Self.fileIcon(path)
-        icons[path] = icon
+        icons[path] = (icon, stamp)
         return icon
     }
 
@@ -120,16 +116,23 @@ final class AppState: ObservableObject {
         NSWorkspace.shared.icon(forFile: URL(fileURLWithPath: path).resolvingSymlinksInPath().path)
     }
 
-    /// Draws every icon once in the background so the first search doesn't wait for them.
+    /// Draws new and changed icons in the background so the first search doesn't wait for them.
     private func loadIcons(_ apps: [AppEntry]) {
-        let missing = apps.map(\.path).filter { icons[$0] == nil }
+        let paths = apps.map(\.path)
+        let current = Set(paths)
+        icons = icons.filter { current.contains($0.key) }
+        let known = icons.mapValues(\.stamp)
         scanQueue.async {
-            for path in missing {
-                let icon = Self.fileIcon(path)
-                var rect = NSRect(x: 0, y: 0, width: 64, height: 64)
-                guard let image = icon.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { continue }
-                let flat = NSImage(cgImage: image, size: NSSize(width: 64, height: 64))
-                DispatchQueue.main.async { MainActor.assumeIsolated { self.icons[path] = flat } }
+            for path in paths {
+                autoreleasepool {
+                    let stamp = AppScanner.stamp(path)
+                    guard known[path] != stamp else { return }
+                    let icon = Self.fileIcon(path)
+                    var rect = NSRect(x: 0, y: 0, width: 64, height: 64)
+                    guard let image = icon.cgImage(forProposedRect: &rect, context: nil, hints: nil) else { return }
+                    let flat = NSImage(cgImage: image, size: NSSize(width: 64, height: 64))
+                    DispatchQueue.main.async { MainActor.assumeIsolated { self.icons[path] = (flat, stamp) } }
+                }
             }
         }
     }
