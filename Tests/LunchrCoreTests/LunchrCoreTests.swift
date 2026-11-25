@@ -187,6 +187,28 @@ final class FileTests: XCTestCase {
         XCTAssertGreaterThan(theme.glow.luminance, theme.background.luminance + 0.19)
     }
 
+    func testEditedThemeSurvivesSaveAndLoad() throws {
+        var paper = try XCTUnwrap(Theme.builtIn.first { $0.id == "paper" })
+        paper.accent = RGBA(r: 0.123456, g: 2, b: -1, a: 0.5)
+        paper.width = 700
+        try ThemeLoader.save(paper, in: dir)
+        let loaded = ThemeLoader.load(folder: dir)
+        XCTAssertEqual(loaded.themes.count, Theme.builtIn.count)
+        XCTAssertEqual(loaded.themes.first { $0.id == "paper" }, paper)
+        XCTAssertEqual(paper.accent.hex, "#1FFF0080")
+    }
+
+    func testDuplicateFindsAFreeName() throws {
+        let paper = try XCTUnwrap(Theme.builtIn.first { $0.id == "paper" })
+        let one = ThemeLoader.duplicate(paper, among: Theme.builtIn, in: dir)
+        XCTAssertEqual([one.id, one.name], ["paper-copy", "Paper copy"])
+        let two = ThemeLoader.duplicate(paper, among: Theme.builtIn + [one], in: dir)
+        XCTAssertEqual([two.id, two.name], ["paper-copy-2", "Paper copy 2"])
+        // A broken file isn't in the list but its name is still taken.
+        try write("{", "paper-copy.json")
+        XCTAssertEqual(ThemeLoader.duplicate(paper, among: Theme.builtIn, in: dir).id, "paper-copy-2")
+    }
+
     func testThemeRoundTrip() throws {
         for theme in Theme.builtIn {
             var back = try JSONDecoder().decode(Theme.self, from: JSONEncoder().encode(theme))

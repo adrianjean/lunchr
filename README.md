@@ -36,7 +36,9 @@ Loose matches only show when nothing better does.
 
 ## Themes
 
-Settings › Appearance › Save a Copy to Edit, or put a `.json` in `~/Library/Application Support/Lunchr/Themes`. Changes show on save. Every field is optional:
+Settings › Themes: edit colors, transparency, blur, font and sizes with the launcher beside it. Saved as you go. Restore Original brings a built-in back; Duplicate makes your own.
+
+Or put a `.json` in `~/Library/Application Support/Lunchr/Themes`. Changes show on save. Every field is optional:
 
 | Field | Values |
 |---|---|
@@ -60,7 +62,7 @@ Debug builds only, `LUNCHR_HOME` keeps your real settings out of it:
 ```sh
 swift build
 LUNCHR_HOME=/tmp/lunchr LUNCHR_PREVIEW=te LUNCHR_SNAPSHOT=out.png .build/debug/Lunchr
-LUNCHR_HOME=/tmp/lunchr LUNCHR_SETTINGS=1 LUNCHR_SNAPSHOT=out.png .build/debug/Lunchr
+LUNCHR_HOME=/tmp/lunchr LUNCHR_SETTINGS=2 LUNCHR_SNAPSHOT=out.png .build/debug/Lunchr
 LUNCHR_HOME=/tmp/lunchr LUNCHR_OPEN=calculator .build/debug/Lunchr
 ```
 

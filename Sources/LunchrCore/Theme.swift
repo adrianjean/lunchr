@@ -19,6 +19,15 @@ public struct RGBA: Codable, Equatable, Sendable {
         a = Double(full & 0xFF) / 255
     }
 
+    /// Clamped and rounded to what a theme file can hold.
+    public init(r: Double, g: Double, b: Double, a: Double) {
+        func snap(_ v: Double) -> Double { (min(max(v, 0), 1) * 255).rounded() / 255 }
+        self.r = snap(r)
+        self.g = snap(g)
+        self.b = snap(b)
+        self.a = snap(a)
+    }
+
     /// Relative luminance, 0 (black) to 1 (white), ignoring alpha.
     public var luminance: Double {
         func linear(_ v: Double) -> Double { v <= 0.04045 ? v / 12.92 : pow((v + 0.055) / 1.055, 2.4) }
@@ -83,6 +92,12 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
 
     public init() {}
 
+    public static let cornerRadii = 0.0...40.0
+    public static let querySizes = 12.0...48.0
+    public static let rowSizes = 10.0...32.0
+    public static let iconSizes = 14.0...64.0
+    public static let widths = 360.0...1200.0
+
     /// Every field is optional: a theme file only needs what it changes.
     public init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
@@ -105,12 +120,12 @@ public struct Theme: Codable, Equatable, Identifiable, Sendable {
         try read(.selection, &selection)
         try read(.selectedText, &selectedText)
         try read(.border, &border)
-        try read(.cornerRadius, &cornerRadius, in: 0...40)
+        try read(.cornerRadius, &cornerRadius, in: Self.cornerRadii)
         try read(.font, &font)
-        try read(.querySize, &querySize, in: 12...48)
-        try read(.rowSize, &rowSize, in: 10...32)
-        try read(.iconSize, &iconSize, in: 14...64)
-        try read(.width, &width, in: 360...1200)
+        try read(.querySize, &querySize, in: Self.querySizes)
+        try read(.rowSize, &rowSize, in: Self.rowSizes)
+        try read(.iconSize, &iconSize, in: Self.iconSizes)
+        try read(.width, &width, in: Self.widths)
     }
 
     /// Reveal glow. Always lighter than the panel: white on light themes, otherwise the accent,
@@ -249,6 +264,36 @@ public enum ThemeLoader {
             }
         }
         return Result(themes: themes, problems: problems)
+    }
+
+    public static func isBuiltIn(_ id: String) -> Bool { Theme.builtIn.contains { $0.id == id } }
+
+    public static func file(_ id: String, in folder: URL) -> URL {
+        folder.appendingPathComponent(id + ".json")
+    }
+
+    /// Saves to <id>.json. A file there that can't be read goes to the Trash, not under the new one.
+    public static func save(_ theme: Theme, in folder: URL) throws {
+        let url = file(theme.id, in: folder)
+        if let data = try? Data(contentsOf: url), (try? JSONDecoder().decode(Theme.self, from: data)) == nil {
+            try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+        }
+        try JSONFile.save(theme, to: url)
+    }
+
+    /// A copy with a free id and name.
+    public static func duplicate(_ theme: Theme, among themes: [Theme], in folder: URL) -> Theme {
+        let taken = Set(themes.map(\.id))
+        let names = Set(themes.map(\.name))
+        var copy = theme
+        var n = 1
+        repeat {
+            copy.id = theme.id + (n == 1 ? "-copy" : "-copy-\(n)")
+            copy.name = theme.name + (n == 1 ? " copy" : " copy \(n)")
+            n += 1
+        } while taken.contains(copy.id) || names.contains(copy.name)
+            || FileManager.default.fileExists(atPath: file(copy.id, in: folder).path)
+        return copy
     }
 
     private static func describe(_ error: Error) -> String {

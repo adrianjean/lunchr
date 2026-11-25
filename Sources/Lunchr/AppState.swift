@@ -10,6 +10,8 @@ final class AppState: ObservableObject {
     @Published private(set) var apps: [AppEntry] = []
     @Published private(set) var themes: [Theme]
     @Published private(set) var themeProblems: [String]
+    /// Theme open in the editor; the launcher shows it instead of the chosen one.
+    @Published var editingThemeID: String?
     @Published private(set) var hotKeyFailed = false
     @Published private(set) var systemIsDark = AppState.readSystemIsDark()
 
@@ -22,6 +24,8 @@ final class AppState: ObservableObject {
     private var appWatcher: FolderWatcher?
     private var themeWatcher: FolderWatcher?
     private var pendingScan: DispatchWorkItem?
+    private var pendingSave: DispatchWorkItem?
+    private var unsavedThemes: [String: Theme] = [:]
     private var appearanceObserver: NSKeyValueObservation?
     private let scanQueue = DispatchQueue(label: "lunchr.scan", qos: .userInitiated)
 
@@ -151,34 +155,87 @@ final class AppState: ObservableObject {
 
     // MARK: Themes
 
+    var activeThemeID: String { systemIsDark ? config.darkTheme : config.lightTheme }
+
     var theme: Theme {
-        let id = systemIsDark ? config.darkTheme : config.lightTheme
-        var theme = themes.first { $0.id == id } ?? themes[0]
+        // While a theme is being edited, show exactly that theme.
+        if let id = editingThemeID, let theme = themes.first(where: { $0.id == id }) { return theme }
+        var theme = themes.first { $0.id == activeThemeID } ?? themes[0]
         if let opacity = config.opacity { theme.opacity = opacity }
         if let blur = config.blur { theme.blur = blur }
         return theme
     }
 
     private func reloadThemes() {
+        // Unsaved edits are newer than the files; saving them brings us back here.
+        guard unsavedThemes.isEmpty else { return }
         let loaded = ThemeLoader.load(folder: themesFolder)
-        themes = loaded.themes
-        themeProblems = loaded.problems
+        if themes != loaded.themes { themes = loaded.themes }
+        if themeProblems != loaded.problems { themeProblems = loaded.problems }
     }
 
-    /// Writes the current look to a new file in the Themes folder.
-    func exportTheme() -> URL? {
-        var copy = theme
-        var n = 1
-        var url: URL
-        repeat {
-            let id = n == 1 ? "\(theme.id)-copy" : "\(theme.id)-copy-\(n)"
-            url = themesFolder.appendingPathComponent(id + ".json")
-            n += 1
-        } while FileManager.default.fileExists(atPath: url.path)
-        copy.name = theme.name + " copy"
-        guard save(copy, to: url) else { return nil }
+    func useTheme(_ id: String) {
+        if systemIsDark { config.darkTheme = id } else { config.lightTheme = id }
+    }
+
+    /// True when the theme has a file: the user's own, or an edited built-in.
+    func hasFile(_ id: String) -> Bool {
+        unsavedThemes[id] != nil
+            || FileManager.default.fileExists(atPath: ThemeLoader.file(id, in: themesFolder).path)
+    }
+
+    /// Shows the edit at once and saves shortly after the last one.
+    func updateTheme(_ theme: Theme) {
+        guard let i = themes.firstIndex(where: { $0.id == theme.id }), themes[i] != theme else { return }
+        unsavedThemes[theme.id] = theme
+        themes[i] = theme
+        pendingSave?.cancel()
+        let work = DispatchWorkItem { [weak self] in MainActor.assumeIsolated { self?.saveThemes() } }
+        pendingSave = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4, execute: work)
+    }
+
+    func saveThemes() {
+        pendingSave?.cancel()
+        pendingSave = nil
+        let edited = unsavedThemes.values
+        unsavedThemes = [:]
+        var failures: [String] = []
+        for theme in edited {
+            do {
+                try ThemeLoader.save(theme, in: themesFolder)
+            } catch {
+                failures.append("\(theme.name) wasn't saved: \(error.localizedDescription)")
+            }
+        }
+        if !failures.isEmpty { themeProblems = failures }
+    }
+
+    /// Returns the id of the copy.
+    func duplicateTheme(_ id: String) -> String? {
+        guard let source = themes.first(where: { $0.id == id }) else { return nil }
+        saveThemes()
+        let copy = ThemeLoader.duplicate(source, among: themes, in: themesFolder)
+        guard save(copy, to: ThemeLoader.file(copy.id, in: themesFolder)) else { return nil }
         reloadThemes()
-        return url
+        return copy.id
+    }
+
+    /// Moves the theme's file to the Trash: deletes the user's own, restores a built-in.
+    func removeThemeFile(_ id: String) {
+        saveThemes()
+        do {
+            try FileManager.default.trashItem(
+                at: ThemeLoader.file(id, in: themesFolder), resultingItemURL: nil)
+        } catch {
+            themeProblems = ["Couldn't move the theme to the Trash: \(error.localizedDescription)"]
+            return
+        }
+        if !ThemeLoader.isBuiltIn(id) {
+            if config.lightTheme == id { config.lightTheme = Config().lightTheme }
+            if config.darkTheme == id { config.darkTheme = Config().darkTheme }
+        }
+        reloadThemes()
     }
 
     private static func readSystemIsDark() -> Bool {

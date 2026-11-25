@@ -43,17 +43,20 @@ extension BlurStyle {
 final class BackdropView: NSView {
     private var applied: (blur: BlurStyle, radius: Double, dark: Bool)?
 
-    func apply(_ theme: Theme) {
+    /// Returns whether anything changed.
+    @discardableResult
+    func apply(_ theme: Theme) -> Bool {
         let next = (blur: theme.blur, radius: theme.cornerRadius, dark: theme.dark)
-        if let applied, applied == next { return }
+        if let applied, applied == next { return false }
         applied = next
 
         subviews.forEach { $0.removeFromSuperview() }
         appearance = NSAppearance(named: theme.dark ? .darkAqua : .aqua)
-        guard let view = makeEffect(theme) else { return }
+        guard let view = makeEffect(theme) else { return true }
         view.frame = bounds
         view.autoresizingMask = [.width, .height]
         addSubview(view)
+        return true
     }
 
     private func makeEffect(_ theme: Theme) -> NSView? {

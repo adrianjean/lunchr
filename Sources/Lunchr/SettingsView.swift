@@ -6,17 +6,25 @@ import LunchrCore
 struct SettingsView: View {
     @ObservedObject var state: AppState
     @State var tab = 0
+    @State private var showPreview = true
     let preview: (Bool) -> Void
+
+    private var previewing: Bool { showPreview && (tab == 1 || tab == 2) }
 
     var body: some View {
         TabView(selection: $tab) {
             GeneralTab(state: state).tabItem { Text("General") }.tag(0)
-            AppearanceTab(state: state, preview: preview).tabItem { Text("Appearance") }.tag(1)
-            MemoryTab(state: state).tabItem { Text("Remembered") }.tag(2)
-            AppsTab(state: state).tabItem { Text("Apps") }.tag(3)
+            AppearanceTab(state: state, showPreview: $showPreview).tabItem { Text("Appearance") }.tag(1)
+            ThemesTab(state: state, showPreview: $showPreview).tabItem { Text("Themes") }.tag(2)
+            MemoryTab(state: state).tabItem { Text("Remembered") }.tag(3)
+            AppsTab(state: state).tabItem { Text("Apps") }.tag(4)
         }
         .padding(12)
-        .frame(width: 540, height: 500)
+        .frame(width: 680, height: 580)
+        .onChange(of: tab, initial: true) {
+            state.editingThemeID = tab == 2 ? state.activeThemeID : nil
+        }
+        .onChange(of: previewing, initial: true) { preview(previewing) }
     }
 }
 
@@ -73,16 +81,14 @@ private struct GeneralTab: View {
 
 private struct AppearanceTab: View {
     @ObservedObject var state: AppState
-    let preview: (Bool) -> Void
-    @State private var previewing = false
+    @Binding var showPreview: Bool
 
     var body: some View {
         Form {
             Section("Theme") {
                 picker("When the Mac is light", $state.config.lightTheme)
                 picker("When the Mac is dark", $state.config.darkTheme)
-                Toggle("Show the launcher while I change this", isOn: $previewing)
-                    .onChange(of: previewing) { _, on in preview(on) }
+                Toggle("Show launcher", isOn: $showPreview)
             }
             Section("Transparency and blur") {
                 Toggle("Use the theme's transparency", isOn: Binding(
@@ -110,20 +116,8 @@ private struct AppearanceTab: View {
                     Text("Pop and glow").tag(RevealStyle.glow)
                 }
             }
-            Section("Your themes") {
-                HStack {
-                    Button("Save a Copy to Edit") {
-                        if let url = state.exportTheme() { NSWorkspace.shared.activateFileViewerSelecting([url]) }
-                    }
-                    Button("Open Themes Folder") { NSWorkspace.shared.open(state.themesFolder) }
-                }
-                ForEach(state.themeProblems, id: \.self) {
-                    Label($0, systemImage: "exclamationmark.triangle").foregroundStyle(.red)
-                }
-            }
         }
         .formStyle(.grouped)
-        .onDisappear { previewing = false; preview(false) }
     }
 
     private func picker(_ title: String, _ id: Binding<String>) -> some View {

@@ -29,6 +29,8 @@ final class LauncherController: NSObject, NSWindowDelegate {
     /// Top-centre point the window hangs from while it's open.
     private var anchor = NSPoint.zero
     private var previewing = false
+    private var previewWanted = false
+    private weak var neighbour: NSWindow?
 
     init(state: AppState) {
         self.state = state
@@ -67,7 +69,10 @@ final class LauncherController: NSObject, NSWindowDelegate {
         }
         panel.contentView = content
 
-        state.$config.map(\.reveal).removeDuplicates().dropFirst()
+        // Replay when the reveal or the theme being edited changes.
+        Publishers.Merge(
+            state.$config.map(\.reveal).removeDuplicates().dropFirst().map { _ in () },
+            state.$editingThemeID.removeDuplicates().dropFirst().map { _ in () })
             .receive(on: DispatchQueue.main)
             .sink { [weak self] _ in if self?.previewing == true { self?.reveal {} } }
             .store(in: &subscriptions)
@@ -90,7 +95,7 @@ final class LauncherController: NSObject, NSWindowDelegate {
     }
 
     func show(query: String = "") {
-        endPreview()
+        setPreviewing(false)
         model.reset()
         model.query = query
         place()
@@ -107,7 +112,7 @@ final class LauncherController: NSObject, NSWindowDelegate {
 
     /// Instant, so the app being opened is never kept waiting.
     func hide() {
-        previewing = false
+        setPreviewing(false)
         panel.orderOut(nil)
         endReveal()
         // Next time opens on the right list instead of swapping it during the reveal.
@@ -165,21 +170,59 @@ final class LauncherController: NSObject, NSWindowDelegate {
         return CATransform3DTranslate(t, -dx, -dy, 0)
     }
 
-    /// Keeps the launcher on screen next to Settings while the look is being changed.
-    func preview(_ on: Bool, query: String = "a") {
-        guard on != previewing else { return }
+    // MARK: Preview
+
+    /// Keeps the launcher on screen beside Settings while the look is being changed.
+    func preview(_ on: Bool, beside window: NSWindow? = nil, query: String = "a") {
+        previewWanted = on
+        neighbour = window
         if on {
-            model.reset()
-            model.query = query
-            place()
-            previewing = true
-            reveal { panel.orderFrontRegardless() }
-        } else {
+            startPreview(query: query)
+        } else if previewing {
             hide()
         }
     }
 
-    private func endPreview() { previewing = false }
+    /// Settings lost or regained the screen.
+    func suspendPreview() { if previewing { hide() } }
+    func resumePreview() { if previewWanted { startPreview(query: "a") } }
+
+    private func startPreview(query: String) {
+        guard !previewing, !panel.isVisible else { return }
+        model.reset()
+        model.query = query
+        if neighbour == nil { place() } else { moveNeighbourIfNeeded() }
+        setPreviewing(true)
+        layout()
+        reveal { panel.orderFrontRegardless() }
+    }
+
+    private func setPreviewing(_ on: Bool) {
+        previewing = on
+        panel.ignoresMouseEvents = on
+        panel.level = on ? .floating : .modalPanel
+    }
+
+    /// Where the launcher hangs beside Settings: right if it fits, else left, else as far right as it goes.
+    private func previewAnchor() -> NSPoint? {
+        guard let window = neighbour, let area = (window.screen ?? NSScreen.main)?.visibleFrame else { return nil }
+        let width = state.theme.width
+        var x = window.frame.maxX + Self.previewGap
+        if x + width > area.maxX {
+            let left = window.frame.minX - Self.previewGap - width
+            x = left >= area.minX ? left : area.maxX - width
+        }
+        return NSPoint(x: x + width / 2, y: window.frame.maxY)
+    }
+
+    private func moveNeighbourIfNeeded() {
+        guard let window = neighbour, let area = (window.screen ?? NSScreen.main)?.visibleFrame else { return }
+        let needed = state.theme.width + Self.previewGap
+        guard area.maxX - window.frame.maxX < needed, window.frame.minX - area.minX < needed else { return }
+        window.setFrameOrigin(NSPoint(x: area.minX + Self.previewGap, y: window.frame.minY))
+    }
+
+    private static let previewGap = 20.0
 
     func windowDidResignKey(_ notification: Notification) {
         if !previewing { hide() }
@@ -207,15 +250,16 @@ final class LauncherController: NSObject, NSWindowDelegate {
         layout()
     }
 
-    private func layout() {
+    func layout() {
         let theme = state.theme
-        backdrop.apply(theme)
+        if previewing, let beside = previewAnchor() { anchor = beside }
+        let reshaped = backdrop.apply(theme)
         panel.appearance = NSAppearance(named: theme.dark ? .darkAqua : .aqua)
         let size = NSSize(width: theme.width, height: theme.height(rows: model.results.count))
         let frame = NSRect(
             x: (anchor.x - size.width / 2).rounded(), y: (anchor.y - size.height).rounded(),
             width: size.width, height: size.height)
-        guard panel.frame != frame else { return }
+        guard reshaped || panel.frame != frame else { return }
         panel.setFrame(frame, display: true)
         panel.invalidateShadow()
     }

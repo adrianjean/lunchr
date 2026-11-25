@@ -58,6 +58,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         guard let out = env["LUNCHR_SNAPSHOT"] else { return }
         if let tab = env["LUNCHR_SETTINGS"].flatMap(Int.init) {
             showSettings(tab: tab)
+            // LUNCHR_EDIT=1: change the open theme the way the editor does.
+            if env["LUNCHR_EDIT"] != nil {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [self] in
+                    MainActor.assumeIsolated {
+                        for width in [640.0, 660, 700] {
+                            var theme = state.theme
+                            theme.width = width
+                            theme.accent = RGBA(hex: "#FF3366")!
+                            state.updateTheme(theme)
+                        }
+                    }
+                }
+            }
         } else {
             launcher.preview(true, query: env["LUNCHR_PREVIEW"] ?? "")
         }
@@ -70,6 +83,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
                 }
                 print("apps:", state.apps.count, "key:", window?.isKeyWindow ?? false,
                       "hotkey failed:", state.hotKeyFailed, "frame:", window?.frame ?? .zero)
+                if let window = settings {
+                    let panel = launcher.debugWindow
+                    print("launcher visible:", panel.isVisible, "frame:", panel.frame,
+                          "overlaps settings:", panel.isVisible && panel.frame.intersects(window.frame),
+                          "active:", NSApp.isActive, "editing:", state.editingThemeID ?? "-")
+                    window.close()
+                    print("after close, launcher visible:", panel.isVisible, "editing:", state.editingThemeID ?? "-")
+                }
                 quit()
             }
         }
@@ -190,7 +211,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         launcher.hide()
         if settings == nil {
             let window = NSWindow(contentViewController: NSHostingController(
-                rootView: SettingsView(state: state, tab: tab) { [weak self] on in self?.launcher.preview(on) }))
+                rootView: SettingsView(state: state, tab: tab) { [weak self] on in
+                    // Next turn: the window isn't on screen yet when the first tab appears.
+                    DispatchQueue.main.async {
+                        MainActor.assumeIsolated {
+                            guard let self, let window = self.settings else { return }
+                            self.launcher.preview(on, beside: window)
+                        }
+                    }
+                }))
             window.title = "Lunchr Settings"
             window.styleMask = [.titled, .closable]
             window.isReleasedWhenClosed = false
@@ -204,8 +233,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func windowWillClose(_ notification: Notification) {
         // Drop the window so its tabs (and any preview) are torn down.
+        if NSColorPanel.sharedColorPanelExists { NSColorPanel.shared.close() }
         launcher.preview(false)
         settings?.contentViewController = nil
         settings = nil
+        state.saveThemes()
+        state.editingThemeID = nil
     }
+
+    func windowDidMove(_ notification: Notification) { launcher.layout() }
+    func windowDidBecomeKey(_ notification: Notification) { launcher.resumePreview() }
+    func applicationDidBecomeActive(_ notification: Notification) { launcher?.resumePreview() }
+    func applicationDidResignActive(_ notification: Notification) { launcher?.suspendPreview() }
+    func applicationWillTerminate(_ notification: Notification) { state.saveThemes() }
 }
