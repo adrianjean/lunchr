@@ -4,16 +4,28 @@
   },
   "groups" : [
     {
-      "name" : "Print",
       "layers" : [
-        { "image-name" : "print.png", "name" : "print", "glass" : false }
+        {
+          "glass" : false,
+          "image-name" : "print.png",
+          "name" : "fork"
+        }
       ],
-      "shadow" : { "kind" : "none", "opacity" : 0 },
+      "name" : "Print",
+      "shadow" : {
+        "kind" : "none",
+        "opacity" : 0
+      },
       "specular" : false,
-      "translucency" : { "enabled" : false, "value" : 0 }
+      "translucency" : {
+        "enabled" : false,
+        "value" : 0
+      }
     }
   ],
   "supported-platforms" : {
-    "squares" : [ "macOS" ]
+    "squares" : [
+      "macOS"
+    ]
   }
 }

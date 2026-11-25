@@ -121,12 +121,6 @@ let forkRight = Plate {
     $0.addPath(fork)
     $0.fillPath()
 }
-let diamond: CGPath = {
-    let p = CGMutablePath()
-    p.addLines(between: [point(512, 772), point(544, 840), point(512, 908), point(480, 840)])
-    p.closeSubpath()
-    return p
-}()
 
 struct Ink {
     let plate: Plate
@@ -146,9 +140,7 @@ let inks: [Ink] = [
     Ink(plate: circle(1024, 512, radius), color: (0.93, 0.38, 0.29), shift: (-2, -4), seed: 30),
     Ink(plate: circle(512, 0, radius), color: (0.34, 0.70, 0.72), shift: (4, 2), seed: 40),
     Ink(plate: forkPlate, color: (0.15, 0.17, 0.22), strength: 0.93, shift: (20, 16), seed: 50),
-    Ink(plate: forkRight, color: (0.96, 0.74, 0.36), strength: 0.8, shift: (4, 2), leavesFork: false, seed: 60),
-    Ink(plate: fill(diamond), color: (0.91, 0.36, 0.25), shift: (-3, 2), leavesFork: false, seed: 70),
-]
+    Ink(plate: forkRight, color: (0.96, 0.74, 0.36), strength: 0.8, shift: (4, 2), leavesFork: false, seed: 60),]
 
 // MARK: Printing
 
